@@ -25,5 +25,9 @@
     }
   ],
   "permissions": ["cookies", "nativeMessaging"],
-  "host_permissions": ["*://*.tcshuke.com/*", "*://*.itcjf.com/*"]
+  "host_permissions": [
+    "*://*.tcshuke.com/*",
+    "*://*.itcjf.com/*",
+    "*://dev.flatjs.com/*"
+  ]
 }

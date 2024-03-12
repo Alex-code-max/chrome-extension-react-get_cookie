@@ -13,7 +13,10 @@
     line-height: 30px;
     padding-bottom: 20px;
     .project{
-      margin:0
+      margin:0;
+      .unlogin-text{
+        color: var(--semi-color-danger);
+      }
     }
   }
 }

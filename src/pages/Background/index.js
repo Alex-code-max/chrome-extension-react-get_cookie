@@ -1,49 +1,88 @@
-console.log('This is the background page.');
-console.log('Put the background scripts here.');
-let SRE_COOKIE = '';
-let PAAS_COOKIE = '';
+// TODO: 监听cookie变化，重新获取cookie
+import { CookieKeysEnum, Login_Status } from '../../../utils/enum';
 
-//TODO:
-// 1. 监听cookie变化，重新获取cookie
-// 2. 根据拿到的cookie直接设置到本地，达到让本地调用测试环境接口
+let SRE_COOKIE = {
+  status: Login_Status[1],
+  value: '',
+};
+let PAAS_COOKIE = { status: Login_Status[1], value: '' };
 
 chrome.cookies.getAll(
   {
-    domain: '.tcshuke.com',
-    name: '__AUTHZ_SSO_TICKET__',
+    domain: CookieKeysEnum.SRE.qa_domain,
+    name: CookieKeysEnum.SRE.key,
   },
   function (cookie) {
-    console.log('cookie :>> ', cookie);
-    SRE_COOKIE = cookie?.[0]?.value;
+    if (!cookie?.[0]?.value) {
+      SRE_COOKIE.status = Login_Status[0];
+      SRE_COOKIE.value = '';
+    } else {
+      SRE_COOKIE.status = Login_Status[1];
+      SRE_COOKIE.value = cookie?.[0]?.value;
+    }
   }
 );
 chrome.cookies.getAll(
   {
-    domain: '.itcjf.com',
-    name: 'orion_sso_token',
+    domain: CookieKeysEnum.PAAS.qa_domain,
+    name: CookieKeysEnum.PAAS.key,
   },
   function (cookie) {
-    PAAS_COOKIE = cookie?.[0]?.value;
+    if (!cookie?.[0]?.value) {
+      PAAS_COOKIE.status = Login_Status[0];
+      PAAS_COOKIE.value = '';
+    } else {
+      PAAS_COOKIE.status = Login_Status[1];
+      PAAS_COOKIE.value = cookie?.[0]?.value;
+    }
   }
 );
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.foo === 'SRE') {
-    GET_SRE_COOKIE(msg).then(sendResponse);
-  } else if (msg.foo === 'PAAS') {
-    GET_PAAS_COOKIE(msg).then(sendResponse);
+chrome.runtime.onMessage.addListener(
+  ({ action, payload }, sender, sendResponse) => {
+    switch (action) {
+      case 'SRE_GET_COOKIE':
+        GET_SRE_COOKIE().then(sendResponse);
+        return true;
+      case 'PAAS_GET_COOKIE':
+        GET_PAAS_COOKIE().then(sendResponse);
+        return true;
+      case 'RES_SET_COOKIE':
+        SET_SRE_COOKIE(payload);
+        break;
+      case 'PAAS_SET_COOKIE':
+        SET_PAAS_COOKIE(payload);
+        break;
+      default:
+        break;
+    }
   }
-  return true;
-});
+);
 
-function GET_SRE_COOKIE(msg) {
+function GET_SRE_COOKIE() {
   return new Promise((resolve) => {
     resolve({ SRE_COOKIE });
   });
 }
 
-function GET_PAAS_COOKIE(msg) {
+function GET_PAAS_COOKIE() {
   return new Promise((resolve) => {
     resolve({ PAAS_COOKIE });
+  });
+}
+
+function SET_SRE_COOKIE(msg) {
+  chrome.cookies.set({
+    url: CookieKeysEnum.SRE.local_url,
+    name: CookieKeysEnum.SRE.key,
+    value: msg,
+  });
+}
+
+function SET_PAAS_COOKIE(msg) {
+  chrome.cookies.set({
+    url: CookieKeysEnum.PAAS.local_url,
+    name: CookieKeysEnum.PAAS.key,
+    value: msg,
   });
 }
